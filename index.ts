@@ -63,7 +63,9 @@ let sketch = function (p) {
       p.line(this.x, this.y, that.x, that.y);
     }
 
-    slopeTo(that: Point): number {}
+    slopeTo(that: Point): number {
+      return Math.abs((that.y - this.y) / (that.x - this.x));
+    }
   }
 
   class LineSegment {
@@ -81,28 +83,67 @@ let sketch = function (p) {
       // DO NOT MODIFY
 
       p.stroke("black");
-      p.strokeWeight(2);
+      p.strokeWeight(200);
       p.line(this.p.x, this.p.y, this.q.x, this.q.y);
     }
 
     toString(): string {
       // DO NOT MODIFY
-
-      return `${this.p} -> ${this.q}`
+      return `(${this.p.x},${this.p.y}) -> (${this.q.x},${this.q.y})`
     }
   }
 
   class BruteCollinearPoints {
+    collinearPoints: Point[];
+
     constructor(points: Point[]) {
-      // YOUR CODE HERE
+      let n = points.length;
+      this.collinearPoints = []
+
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+          for (let k = j + 1; k < n; k++) {
+            for (let l = k + 1; l < n; l++) {
+              if (
+                points[i].slopeTo(points[j]) ===
+                points[j].slopeTo(points[k]) &&
+                points[j].slopeTo(points[k]) ===
+                points[k].slopeTo(points[l])
+              ) {
+                if (!this.collinearPoints.includes(points[i])) {
+                  this.collinearPoints.push(points[i])
+                }
+                if (!this.collinearPoints.includes(points[j])) {
+                  this.collinearPoints.push(points[j])
+                }
+                if (!this.collinearPoints.includes(points[k])) {
+                  this.collinearPoints.push(points[k])
+                }
+                if (!this.collinearPoints.includes(points[l])) {
+                  this.collinearPoints.push(points[l])
+                }
+              }
+            }
+          }
+        }
+      }
     }
 
     numberOfSegments(): number {
-      // YOUR CODE HERE
+      return this.collinearPoints.length;
     }
 
     segments(): LineSegment[] {
-      // YOUR CODE HERE
+      const lineSegments: LineSegment[] = [];
+
+      for (let i = 0; i < this.collinearPoints.length - 1; i++) {
+        const startPoint = this.collinearPoints[i];
+        const endPoint = this.collinearPoints[i + 1];
+
+        lineSegments.push(new LineSegment(startPoint, endPoint));
+      }
+
+      return lineSegments;
     }
   }
 
@@ -116,7 +157,13 @@ let sketch = function (p) {
     }
 
     segments(): LineSegment[] {
-      // YOUR CODE HERE
+      // let x= new Point(3,2)
+      // let y= new Point(3,20)
+      // let x2= new Point(9000,2000)
+      // let y2= new Point(3000,20000)
+      // let hi = new LineSegment(x2,y2)
+      // let hi2 = new LineSegment(x,y)
+      // return [hi,hi2]
     }
   }
 
@@ -136,19 +183,15 @@ let sketch = function (p) {
 
   p.draw = function () {
     p.translate(padding, height - padding);
-    p.scale(1/100, -1/100);
+    p.scale(1 / 100, -1 / 100);
 
     // Call your draw and drawTo here.
-
-    // point.draw();
-    // point2.draw();
-    // point.drawTo(point2);
 
     for (const point of points) {
       point.draw();
     }
 
-    const collinear = new FastCollinearPoints(points);
+    const collinear = new BruteCollinearPoints(points);
     for (const segment of collinear.segments()) {
       console.log(segment.toString());
       segment.draw();
