@@ -3,8 +3,29 @@ import p5 from "p5";
 const width: number = 800;
 const height: number = 500;
 const padding: number = 50;
+let fileName = "input6"; // Default file name
 
-let sketch = function (p) {
+let sketch = async function (p: p5) {
+  let result: string[] = [];
+
+  let myLink = document.getElementById('inputButton');
+  let fileInput = document.getElementById('fileInput') as HTMLInputElement;
+
+  myLink!.onclick = function () {
+    fileName = fileInput!.value;
+    console.log(fileName)
+    loadFile();
+  }
+
+  function loadFile() {
+    p.loadStrings(`test-data/${fileName}.txt`, function (data) {
+      data.shift();
+      data.pop();
+      result = data;
+      p.setup();
+    });
+  }
+
   p.setup = function () {
     p.createCanvas(width, height);
 
@@ -40,7 +61,6 @@ let sketch = function (p) {
   class Point {
     x: number;
     y: number;
-    p;
 
     constructor(x: number, y: number) {
       this.x = x;
@@ -64,7 +84,7 @@ let sketch = function (p) {
     }
 
     slopeTo(that: Point): number {
-      return Math.abs((that.y - this.y) / (that.x - this.x));
+      return (that.y - this.y) / (that.x - this.x);
     }
   }
 
@@ -147,41 +167,47 @@ let sketch = function (p) {
     }
   }
 
-  class FastCollinearPoints {
-    constructor(points: Point[]) {
-      // YOUR CODE HERE
-    }
+  // class FastCollinearPoints {
+  //   constructor(points: Point[]) {
+  //     // YOUR CODE HERE
+  //   }
 
-    numberOfSegments(): number {
-      // YOUR CODE HERE
-    }
+  //   numberOfSegments(): number {
+  //     // YOUR CODE HERE
+  //   }
 
-    segments(): LineSegment[] {
-      // let x= new Point(3,2)
-      // let y= new Point(3,20)
-      // let x2= new Point(9000,2000)
-      // let y2= new Point(3000,20000)
-      // let hi = new LineSegment(x2,y2)
-      // let hi2 = new LineSegment(x,y)
-      // return [hi,hi2]
-    }
-  }
+  //   segments(): LineSegment[] {
+  //     // let x= new Point(3,2)
+  //     // let y= new Point(3,20)
+  //     // let x2= new Point(9000,2000)
+  //     // let y2= new Point(3000,20000)
+  //     // let hi = new LineSegment(x2,y2)
+  //     // let hi2 = new LineSegment(x,y)
+  //     // return [hi,hi2]
+  //   }
+  // }
 
   // Declare your point objects here~
   // const point = new Point(19000, 10000);
   // const point2 = new Point(10000, 10000);
 
   // from input6.txt
-  const points: Point[] = [
-    new Point(19000, 10000),
-    new Point(18000, 10000),
-    new Point(32000, 10000),
-    new Point(21000, 10000),
-    new Point(1234, 5678),
-    new Point(14000, 10000),
-  ];
+  // const points: Point[] = [
+  //   new Point(19000, 10000),
+  //   new Point(18000, 10000),
+  //   new Point(32000, 10000),
+  //   new Point(21000, 10000),
+  //   new Point(1234, 5678),
+  //   new Point(14000, 10000),
+  // ];
+
 
   p.draw = function () {
+    // Convert each string in the array to a Point object
+    const points: Point[] = result.map(pointString => {
+      const [x, y] = pointString.trim().split(/\s+/).map(Number);
+      return new Point(x, y);
+    });
     p.translate(padding, height - padding);
     p.scale(1 / 100, -1 / 100);
 
@@ -193,10 +219,10 @@ let sketch = function (p) {
 
     const collinear = new BruteCollinearPoints(points);
     for (const segment of collinear.segments()) {
-      console.log(segment.toString());
+      // console.log(segment.toString());
       segment.draw();
     }
   };
-};
+} as any;
 
 new p5(sketch);
