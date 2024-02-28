@@ -1,30 +1,27 @@
 import p5 from "p5";
 
 const width: number = 800;
-const height: number = 500;
+const height: number = 535;
 const padding: number = 50;
-let fileName = "input6"; // Default file name
 
 let sketch = async function (p: p5) {
   let result: string[] = [];
 
   let myLink = document.getElementById('inputButton');
-  let fileInput = document.getElementById('fileInput') as HTMLInputElement;
+  let fileNameSelect = document.getElementById('fileSelect') as HTMLSelectElement;
+  let fileName = fileNameSelect.value;
 
+  // Inside the onclick handler
   myLink!.onclick = function () {
-    fileName = fileInput!.value;
-    console.log(fileName)
-    loadFile();
-  }
-
-  function loadFile() {
+    fileName = fileNameSelect.value;
     p.loadStrings(`test-data/${fileName}.txt`, function (data) {
       data.shift();
       data.pop();
       result = data;
+      // console.log(result)
       p.setup();
     });
-  }
+  };
 
   p.setup = function () {
     p.createCanvas(width, height);
@@ -84,6 +81,16 @@ let sketch = async function (p: p5) {
     }
 
     slopeTo(that: Point): number {
+      if (this.x === that.x && this.y === that.y) {
+        // Degenerate line segment
+        return Number.NEGATIVE_INFINITY;
+      }
+  
+      if (this.x === that.x) {
+        // Vertical line
+        return Number.POSITIVE_INFINITY;
+      }
+
       return (that.y - this.y) / (that.x - this.x);
     }
   }
@@ -102,7 +109,7 @@ let sketch = async function (p: p5) {
     draw(): void {
       // DO NOT MODIFY
 
-      p.stroke("black");
+      p.stroke("red");
       p.strokeWeight(200);
       p.line(this.p.x, this.p.y, this.q.x, this.q.y);
     }
@@ -114,11 +121,11 @@ let sketch = async function (p: p5) {
   }
 
   class BruteCollinearPoints {
-    collinearPoints: Point[];
+    collinearPoints: Point[][];
 
     constructor(points: Point[]) {
       let n = points.length;
-      this.collinearPoints = []
+      this.collinearPoints = [];
 
       for (let i = 0; i < n; i++) {
         for (let j = i + 1; j < n; j++) {
@@ -130,18 +137,20 @@ let sketch = async function (p: p5) {
                 points[j].slopeTo(points[k]) ===
                 points[k].slopeTo(points[l])
               ) {
-                if (!this.collinearPoints.includes(points[i])) {
-                  this.collinearPoints.push(points[i])
-                }
-                if (!this.collinearPoints.includes(points[j])) {
-                  this.collinearPoints.push(points[j])
-                }
-                if (!this.collinearPoints.includes(points[k])) {
-                  this.collinearPoints.push(points[k])
-                }
-                if (!this.collinearPoints.includes(points[l])) {
-                  this.collinearPoints.push(points[l])
-                }
+                // this.collinearPoints.push([points[i].slopeTo(points[j])])
+                this.collinearPoints.push([points[i], points[j], points[k], points[l]])
+                // if (!this.collinearPoints.includes(points[i])) {
+                //   this.collinearPoints.push(points[i])
+                // }
+                // if (!this.collinearPoints.includes(points[j])) {
+                //   this.collinearPoints.push(points[j])
+                // }
+                // if (!this.collinearPoints.includes(points[k])) {
+                //   this.collinearPoints.push(points[k])
+                // }
+                // if (!this.collinearPoints.includes(points[l])) {
+                //   this.collinearPoints.push(points[l])
+                // }
               }
             }
           }
@@ -155,14 +164,17 @@ let sketch = async function (p: p5) {
 
     segments(): LineSegment[] {
       const lineSegments: LineSegment[] = [];
+      console.log(this.collinearPoints)
 
-      for (let i = 0; i < this.collinearPoints.length - 1; i++) {
-        const startPoint = this.collinearPoints[i];
-        const endPoint = this.collinearPoints[i + 1];
-
-        lineSegments.push(new LineSegment(startPoint, endPoint));
+      for (const collinearSet of this.collinearPoints) {
+        for (let i = 0; i < collinearSet.length - 1; i++) {
+          const startPoint = collinearSet[i];
+          const endPoint = collinearSet[i + 1];
+      
+          lineSegments.push(new LineSegment(startPoint, endPoint));
+        }
       }
-
+      console.log(lineSegments,'aaa')
       return lineSegments;
     }
   }
@@ -204,12 +216,19 @@ let sketch = async function (p: p5) {
 
   p.draw = function () {
     // Convert each string in the array to a Point object
-    const points: Point[] = result.map(pointString => {
-      const [x, y] = pointString.trim().split(/\s+/).map(Number);
-      return new Point(x, y);
-    });
+    const points: Point[] = result
+      .map(pointString => {
+        const [x, y] = pointString.trim().split(/\s+/).map(Number);
+        if (y === undefined) {
+          return null;
+        } else {
+          return new Point(x, y);
+        }
+      })
+      .filter((value): value is Point => value !== null);
+
     p.translate(padding, height - padding);
-    p.scale(1 / 100, -1 / 100);
+    p.scale(1 / 80, -1 / 80);
 
     // Call your draw and drawTo here.
 
@@ -223,6 +242,6 @@ let sketch = async function (p: p5) {
       segment.draw();
     }
   };
-} as any;
+};
 
 new p5(sketch);
