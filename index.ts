@@ -85,7 +85,7 @@ let sketch = async function (p: p5) {
         // Degenerate line segment
         return Number.NEGATIVE_INFINITY;
       }
-  
+
       if (this.x === that.x) {
         // Vertical line
         return Number.POSITIVE_INFINITY;
@@ -127,6 +127,22 @@ let sketch = async function (p: p5) {
       let n = points.length;
       this.collinearPoints = [];
 
+      if (points === null) {
+        throw new Error("Points array cannot be null");
+      }
+
+      for (let i = 0; i < n; i++) {
+        if (points[i] === null) {
+          throw new Error("Point in the array cannot be null");
+        }
+
+        for (let j = i + 1; j < n; j++) {
+          if (points[i] === points[j]) {
+            throw new Error("Repeated points are not allowed");
+          }
+        }
+      }
+
       for (let i = 0; i < n; i++) {
         for (let j = i + 1; j < n; j++) {
           for (let k = j + 1; k < n; k++) {
@@ -137,7 +153,6 @@ let sketch = async function (p: p5) {
                 points[j].slopeTo(points[k]) ===
                 points[k].slopeTo(points[l])
               ) {
-                // this.collinearPoints.push([points[i].slopeTo(points[j])])
                 this.collinearPoints.push([points[i], points[j], points[k], points[l]])
                 // if (!this.collinearPoints.includes(points[i])) {
                 //   this.collinearPoints.push(points[i])
@@ -170,11 +185,11 @@ let sketch = async function (p: p5) {
         for (let i = 0; i < collinearSet.length - 1; i++) {
           const startPoint = collinearSet[i];
           const endPoint = collinearSet[i + 1];
-      
+
           lineSegments.push(new LineSegment(startPoint, endPoint));
         }
       }
-      console.log(lineSegments,'aaa')
+      console.log(lineSegments, 'aaa')
       return lineSegments;
     }
   }
