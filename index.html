@@ -2,6 +2,12 @@
 <html>
 
 <body>
+  <label for="algoSelect">Select Algorithm: </label>
+  <select id="algoSelect">
+    <option value="brute">Brute force</option>
+    <option value="fast">Fast and sorting-based</option>
+  </select>
+  <br>
   <label for="fileSelect">Select File: </label>
   <select id="fileSelect">
     <option value="equidistant">equidistant.txt</option>
@@ -57,6 +63,7 @@
     <option value="vertical100">vertical100.txt</option>
   </select>
   <button id="inputButton">Load File</button>
+  <div id="timeDisplay" style="margin-bottom: -20px;">Time Executed: </div>
 
   <script type="module" src="./index.ts"></script>
 </body>

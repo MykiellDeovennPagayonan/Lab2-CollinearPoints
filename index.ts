@@ -8,7 +8,9 @@ let sketch = async function (p: p5) {
   let result: string[] = [];
 
   let myLink = document.getElementById('inputButton');
+  let algorithmSelect = document.getElementById('algoSelect') as HTMLSelectElement;
   let fileNameSelect = document.getElementById('fileSelect') as HTMLSelectElement;
+  let timeDisplay = document.getElementById('timeDisplay') as HTMLDivElement;
   let fileName = fileNameSelect.value;
 
   // Inside the onclick handler
@@ -18,8 +20,8 @@ let sketch = async function (p: p5) {
       data.shift();
       data.pop();
       result = data;
-      // console.log(result)
       p.setup();
+      p.redraw();
     });
   };
 
@@ -53,6 +55,7 @@ let sketch = async function (p: p5) {
 
     p.strokeWeight(0);
     p.text("(0, 0)", padding + 10, height - 30);
+    p.noLoop();
   };
 
   class Point {
@@ -121,11 +124,11 @@ let sketch = async function (p: p5) {
   }
 
   class BruteCollinearPoints {
-    collinearPoints: Point[][];
+    collinearSegments: LineSegment[];
 
     constructor(points: Point[]) {
       let n = points.length;
-      this.collinearPoints = [];
+      this.collinearSegments = [];
 
       if (points === null) {
         throw new Error("Points array cannot be null");
@@ -140,32 +143,27 @@ let sketch = async function (p: p5) {
           if (points[i] === points[j]) {
             throw new Error("Repeated points are not allowed");
           }
-        }
-      }
 
-      for (let i = 0; i < n; i++) {
-        for (let j = i + 1; j < n; j++) {
           for (let k = j + 1; k < n; k++) {
-            for (let l = k + 1; l < n; l++) {
-              if (
-                points[i].slopeTo(points[j]) ===
-                points[j].slopeTo(points[k]) &&
-                points[j].slopeTo(points[k]) ===
-                points[k].slopeTo(points[l])
-              ) {
-                this.collinearPoints.push([points[i], points[j], points[k], points[l]])
-                // if (!this.collinearPoints.includes(points[i])) {
-                //   this.collinearPoints.push(points[i])
-                // }
-                // if (!this.collinearPoints.includes(points[j])) {
-                //   this.collinearPoints.push(points[j])
-                // }
-                // if (!this.collinearPoints.includes(points[k])) {
-                //   this.collinearPoints.push(points[k])
-                // }
-                // if (!this.collinearPoints.includes(points[l])) {
-                //   this.collinearPoints.push(points[l])
-                // }
+            if (points[i].slopeTo(points[j]) === points[j].slopeTo(points[k])) {
+              for (let l = k + 1; l < n; l++) {
+                if (points[j].slopeTo(points[k]) === points[k].slopeTo(points[l])) {
+                  // Sort the collinear points based on x-coordinate, and then y-coordinate
+                  const collinearSet = [points[i], points[j], points[k], points[l]].sort((a, b) => {
+                    if (a.x !== b.x) {
+                      return a.x - b.x;
+                    }
+                    return a.y - b.y;
+                  });
+
+                  // Create a line segment using the first and last points (endpoints)
+                  const newSegment = new LineSegment(collinearSet[0], collinearSet[collinearSet.length - 1]);
+
+                  // Avoid adding duplicate line segments
+                  if (!this.collinearSegments.some(segment => segment.toString() === newSegment.toString())) {
+                    this.collinearSegments.push(newSegment);
+                  }
+                }
               }
             }
           }
@@ -174,60 +172,66 @@ let sketch = async function (p: p5) {
     }
 
     numberOfSegments(): number {
-      return this.collinearPoints.length;
+      return this.collinearSegments.length;
     }
 
     segments(): LineSegment[] {
       const lineSegments: LineSegment[] = [];
-      console.log(this.collinearPoints)
+      console.log(this.collinearSegments);
 
-      for (const collinearSet of this.collinearPoints) {
-        for (let i = 0; i < collinearSet.length - 1; i++) {
-          const startPoint = collinearSet[i];
-          const endPoint = collinearSet[i + 1];
-
-          lineSegments.push(new LineSegment(startPoint, endPoint));
+      for (const collinearSet of this.collinearSegments) {
+        // Avoid adding duplicate line segments
+        if (!lineSegments.some(segment => segment.toString() === collinearSet.toString())) {
+          lineSegments.push(collinearSet);
         }
       }
-      console.log(lineSegments, 'aaa')
       return lineSegments;
     }
   }
 
-  // class FastCollinearPoints {
-  //   constructor(points: Point[]) {
-  //     // YOUR CODE HERE
-  //   }
+  class FastCollinearPoints {
+    collinearSegments: LineSegment[];
+    slopes: number[][];
 
-  //   numberOfSegments(): number {
-  //     // YOUR CODE HERE
-  //   }
+    constructor(points: Point[]) {
+      let n = points.length;
+      this.collinearSegments = [];
+      this.slopes = [];
 
-  //   segments(): LineSegment[] {
-  //     // let x= new Point(3,2)
-  //     // let y= new Point(3,20)
-  //     // let x2= new Point(9000,2000)
-  //     // let y2= new Point(3000,20000)
-  //     // let hi = new LineSegment(x2,y2)
-  //     // let hi2 = new LineSegment(x,y)
-  //     // return [hi,hi2]
-  //   }
-  // }
+      if (points === null) {
+        throw new Error("Points array cannot be null");
+      }
 
-  // Declare your point objects here~
-  // const point = new Point(19000, 10000);
-  // const point2 = new Point(10000, 10000);
+      for (let i = 0; i < n; i++) {
+        this.slopes[i] = [];
+        if (points[i] === null) {
+          throw new Error("Point in the array cannot be null");
+        }
 
-  // from input6.txt
-  // const points: Point[] = [
-  //   new Point(19000, 10000),
-  //   new Point(18000, 10000),
-  //   new Point(32000, 10000),
-  //   new Point(21000, 10000),
-  //   new Point(1234, 5678),
-  //   new Point(14000, 10000),
-  // ];
+        for (let j = 0; j < n; j++) {
+          if (points[i] === points[j]) {
+            continue;
+          }
+          this.slopes[i].push(points[i].slopeTo(points[j]))
+        }
 
+        this.slopes[i].sort((a,b) => {return a - b})
+      }
+      
+      // for (const slopes of this.slopes) {
+
+      // }
+    }
+
+    numberOfSegments(): number {
+      return 0;
+    }
+
+    segments(): LineSegment[] {
+
+      return []
+    }
+  }
 
   p.draw = function () {
     // Convert each string in the array to a Point object
@@ -250,8 +254,15 @@ let sketch = async function (p: p5) {
     for (const point of points) {
       point.draw();
     }
+    const start = performance.now();
+    const collinear =
+      algorithmSelect.value === 'brute' ?
+        new BruteCollinearPoints(points) :
+        new FastCollinearPoints(points)
+    const end = performance.now();
 
-    const collinear = new BruteCollinearPoints(points);
+    timeDisplay.textContent = `Time Executed: ${end - start} ms`;
+
     for (const segment of collinear.segments()) {
       // console.log(segment.toString());
       segment.draw();
