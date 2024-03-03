@@ -191,33 +191,47 @@ let sketch = async function (p: p5) {
 
   class FastCollinearPoints {
     collinearSegments: LineSegment[];
-    slopes: number[][];
 
     constructor(points: Point[]) {
       let n = points.length;
       this.collinearSegments = [];
-      this.slopes = [];
 
       if (points === null) {
         throw new Error("Points array cannot be null");
       }
 
       for (let i = 0; i < n; i++) {
-        this.slopes[i] = [];
-        if (points[i] === null) {
-          throw new Error("Point in the array cannot be null");
-        }
-
-        for (let j = 0; j < n; j++) {
-          if (points[i] === points[j]) {
-            continue;
-          }
-          this.slopes[i].push(points[i].slopeTo(points[j]))
-        }
-
-        this.slopes[i].sort((a,b) => {return a - b})
-      }
+        const origin = points[i];
+        const slopesMap = new Map();
       
+        for (let j = i + 1; j < n; j++) {
+          if (i === j) continue;
+      
+          const slope = origin.slopeTo(points[j]);
+          slopesMap.set(slope, slopesMap.get(slope) || []);
+          slopesMap.get(slope).push(points[j]);
+        }
+      
+        for (const [slope, collinearPoints] of slopesMap) {
+          console.log(origin,slopesMap)
+          if (collinearPoints.length >= 3) {
+            const collinearSet = [origin, ...collinearPoints];
+            collinearSet.sort((a, b) => {
+              if (a.x !== b.x) {
+                return a.x - b.x;
+              }
+              return a.y - b.y;
+            });
+      
+            // Avoid duplicates
+            const newSegment = new LineSegment(collinearSet[0], collinearSet[collinearSet.length - 1]);
+            if (!this.collinearSegments.some(segment => segment.toString() === newSegment.toString())) {
+              this.collinearSegments.push(newSegment);
+            }
+          }
+        }
+      }
+
       // for (const slopes of this.slopes) {
 
       // }
@@ -229,7 +243,7 @@ let sketch = async function (p: p5) {
 
     segments(): LineSegment[] {
 
-      return []
+      return this.collinearSegments;
     }
   }
 
