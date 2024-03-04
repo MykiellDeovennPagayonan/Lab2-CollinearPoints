@@ -177,7 +177,7 @@ let sketch = async function (p: p5) {
 
     segments(): LineSegment[] {
       const lineSegments: LineSegment[] = [];
-      console.log(this.collinearSegments);
+      // console.log(this.collinearSegments);
 
       for (const collinearSet of this.collinearSegments) {
         // Avoid adding duplicate line segments
@@ -213,7 +213,7 @@ let sketch = async function (p: p5) {
         }
       
         for (const [slope, collinearPoints] of slopesMap) {
-          console.log(origin,slopesMap)
+          // console.log(origin,slopesMap)
           if (collinearPoints.length >= 3) {
             const collinearSet = [origin, ...collinearPoints];
             collinearSet.sort((a, b) => {
@@ -238,7 +238,7 @@ let sketch = async function (p: p5) {
     }
 
     numberOfSegments(): number {
-      return 0;
+      return this.collinearSegments.length;
     }
 
     segments(): LineSegment[] {
