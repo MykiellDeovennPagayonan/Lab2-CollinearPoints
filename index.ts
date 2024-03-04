@@ -7,14 +7,14 @@ const padding: number = 50;
 let sketch = async function (p: p5) {
   let result: string[] = [];
 
-  let myLink = document.getElementById('inputButton');
+  let loadFile = document.getElementById('inputButton');
   let algorithmSelect = document.getElementById('algoSelect') as HTMLSelectElement;
   let fileNameSelect = document.getElementById('fileSelect') as HTMLSelectElement;
   let timeDisplay = document.getElementById('timeDisplay') as HTMLDivElement;
   let fileName = fileNameSelect.value;
 
   // Inside the onclick handler
-  myLink!.onclick = function () {
+  loadFile!.onclick = function () {
     fileName = fileNameSelect.value;
     p.loadStrings(`test-data/${fileName}.txt`, function (data) {
       data.shift();
@@ -87,9 +87,7 @@ let sketch = async function (p: p5) {
       if (this.x === that.x && this.y === that.y) {
         // Degenerate line segment
         return Number.NEGATIVE_INFINITY;
-      }
-
-      if (this.x === that.x) {
+      } else if (this.x === that.x) {
         // Vertical line
         return Number.POSITIVE_INFINITY;
       }
@@ -119,7 +117,10 @@ let sketch = async function (p: p5) {
 
     toString(): string {
       // DO NOT MODIFY
-      return `(${this.p.x},${this.p.y}) -> (${this.q.x},${this.q.y})`
+
+      const p = JSON.stringify(this.p);
+      const q = JSON.stringify(this.q);
+      return `${p} -> ${q}`;
     }
   }
 
@@ -134,6 +135,10 @@ let sketch = async function (p: p5) {
         throw new Error("Points array cannot be null");
       }
 
+      // sort the points according to x values
+      // if same x values, sort by y instead
+      points.sort((a, b) => a.x - b.x || a.y - b.y);
+      
       for (let i = 0; i < n; i++) {
         if (points[i] === null) {
           throw new Error("Point in the array cannot be null");
@@ -148,21 +153,9 @@ let sketch = async function (p: p5) {
             if (points[i].slopeTo(points[j]) === points[j].slopeTo(points[k])) {
               for (let l = k + 1; l < n; l++) {
                 if (points[j].slopeTo(points[k]) === points[k].slopeTo(points[l])) {
-                  // Sort the collinear points based on x-coordinate, and then y-coordinate
-                  const collinearSet = [points[i], points[j], points[k], points[l]].sort((a, b) => {
-                    if (a.x !== b.x) {
-                      return a.x - b.x;
-                    }
-                    return a.y - b.y;
-                  });
+                  const segment = new LineSegment(points[i], points[l]);
 
-                  // Create a line segment using the first and last points (endpoints)
-                  const newSegment = new LineSegment(collinearSet[0], collinearSet[collinearSet.length - 1]);
-
-                  // Avoid adding duplicate line segments
-                  if (!this.collinearSegments.some(segment => segment.toString() === newSegment.toString())) {
-                    this.collinearSegments.push(newSegment);
-                  }
+                  this.collinearSegments.push(segment);
                 }
               }
             }
@@ -176,16 +169,14 @@ let sketch = async function (p: p5) {
     }
 
     segments(): LineSegment[] {
-      const lineSegments: LineSegment[] = [];
-      // console.log(this.collinearSegments);
-
-      for (const collinearSet of this.collinearSegments) {
-        // Avoid adding duplicate line segments
-        if (!lineSegments.some(segment => segment.toString() === collinearSet.toString())) {
-          lineSegments.push(collinearSet);
-        }
-      }
-      return lineSegments;
+      // prevent duplicate segments
+      const filteredSegments = this.collinearSegments.filter((obj, index) => {
+        return index === this.collinearSegments.findIndex(o => {
+          return obj.toString() === o.toString();
+        });
+      });
+      
+      return filteredSegments;
     }
   }
 
@@ -203,15 +194,15 @@ let sketch = async function (p: p5) {
       for (let i = 0; i < n; i++) {
         const origin = points[i];
         const slopesMap = new Map();
-      
+
         for (let j = i + 1; j < n; j++) {
           if (i === j) continue;
-      
+
           const slope = origin.slopeTo(points[j]);
           slopesMap.set(slope, slopesMap.get(slope) || []);
           slopesMap.get(slope).push(points[j]);
         }
-      
+
         for (const [slope, collinearPoints] of slopesMap) {
           // console.log(origin,slopesMap)
           if (collinearPoints.length >= 3) {
@@ -222,12 +213,13 @@ let sketch = async function (p: p5) {
               }
               return a.y - b.y;
             });
-      
+
             // Avoid duplicates
             const newSegment = new LineSegment(collinearSet[0], collinearSet[collinearSet.length - 1]);
-            if (!this.collinearSegments.some(segment => segment.toString() === newSegment.toString())) {
-              this.collinearSegments.push(newSegment);
-            }
+            // if (!this.collinearSegments.some(segment => segment.toString() === newSegment.toString())) {
+            //   this.collinearSegments.push(newSegment);
+            // }
+            this.collinearSegments.push(newSegment);
           }
         }
       }
@@ -278,7 +270,7 @@ let sketch = async function (p: p5) {
     timeDisplay.textContent = `Time Executed: ${end - start} ms`;
 
     for (const segment of collinear.segments()) {
-      // console.log(segment.toString());
+      console.log(segment.toString());
       segment.draw();
     }
   };
